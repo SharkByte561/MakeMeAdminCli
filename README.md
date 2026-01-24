@@ -19,11 +19,11 @@ A PowerShell module for granting temporary local administrator rights from the c
 ### 1. Install (Run as Administrator)
 
 ```powershell
-# Navigate to the module directory
+# Navigate to the repository root
 cd .\MakeMeAdminCli
 
 # Run the installer (requires elevation)
-.\Install-MakeMeAdminCLI.ps1
+.\scripts\Install-MakeMeAdminCLI.ps1
 ```
 
 ### 2. Request Admin Rights (Run as Standard User)
@@ -65,11 +65,11 @@ Remove-TempAdmin
 Run PowerShell as Administrator:
 
 ```powershell
-# From the module source directory
-.\Install-MakeMeAdminCLI.ps1
+# From the repository root
+.\scripts\Install-MakeMeAdminCLI.ps1
 
 # Force reinstall if already installed
-.\Install-MakeMeAdminCLI.ps1 -Force
+.\scripts\Install-MakeMeAdminCLI.ps1 -Force
 ```
 
 The installer will:
@@ -81,7 +81,7 @@ The installer will:
 ### Verify Installation
 
 ```powershell
-.\Test-MakeMeAdminCLI.ps1
+.\tests\Test-MakeMeAdminCLI.ps1
 ```
 
 Expected output:
@@ -106,13 +106,13 @@ All tests passed. MakeMeAdminCLI is ready to use.
 
 ```powershell
 # Complete removal
-.\Uninstall-MakeMeAdminCLI.ps1
+.\scripts\Uninstall-MakeMeAdminCLI.ps1
 
 # Keep configuration for later reinstall
-.\Uninstall-MakeMeAdminCLI.ps1 -KeepConfig
+.\scripts\Uninstall-MakeMeAdminCLI.ps1 -KeepConfig
 
 # Skip confirmation prompts
-.\Uninstall-MakeMeAdminCLI.ps1 -Force
+.\scripts\Uninstall-MakeMeAdminCLI.ps1 -Force
 ```
 
 ---
@@ -403,7 +403,7 @@ Error: MakeMeAdminCLI service is not running.
 
 **Solution:** Run the installer as Administrator:
 ```powershell
-.\Install-MakeMeAdminCLI.ps1 -Force
+.\scripts\Install-MakeMeAdminCLI.ps1 -Force
 ```
 
 Or manually start the scheduled task:
@@ -433,7 +433,7 @@ Error: The term 'Add-TempAdmin' is not recognized...
 ```powershell
 Import-Module MakeMeAdminCLI
 # Or verify installation
-.\Test-MakeMeAdminCLI.ps1
+.\tests\Test-MakeMeAdminCLI.ps1
 ```
 
 ### Admin Rights Not Working
@@ -451,29 +451,39 @@ Get-EventLog -LogName Application -Source MakeMeAdminCLI -Newest 20
 
 ---
 
-## File Structure
+## Repository Structure
 
 ```
 MakeMeAdminCLI/
-├── MakeMeAdminCLI.psd1           # Module manifest
-├── MakeMeAdminCLI.psm1           # Module loader
-├── config.json                    # Default configuration
-├── Install-MakeMeAdminCLI.ps1    # Installation script
-├── Uninstall-MakeMeAdminCLI.ps1  # Uninstallation script
-├── Test-MakeMeAdminCLI.ps1       # Installation verification
-├── README.md                      # This file
-├── Private/
-│   ├── Service-Main.ps1          # Named pipe server
-│   ├── AdminGroup-Functions.ps1  # Admin group manipulation
-│   ├── ScheduledTask-Functions.ps1 # Removal task management
-│   ├── Config-Functions.ps1      # Configuration helpers
-│   ├── Logging-Functions.ps1     # Event logging
-│   └── NamedPipe-Client.ps1      # Client communication
-└── Public/
-    ├── Add-TempAdmin.ps1         # Request elevation
-    ├── Remove-TempAdmin.ps1      # Remove elevation
-    ├── Get-TempAdminStatus.ps1   # Check status
-    └── Set-TempAdminConfig.ps1   # Configure settings
+├── .github/                       # GitHub templates and workflows
+├── docs/                          # Documentation
+│   └── ARCHITECTURE.md
+├── scripts/                       # Installation and utility scripts
+│   ├── Install-MakeMeAdminCLI.ps1
+│   ├── Uninstall-MakeMeAdminCLI.ps1
+│   └── Publish-ToGallery.ps1
+├── src/MakeMeAdminCLI/            # PowerShell module
+│   ├── MakeMeAdminCLI.psd1       # Module manifest
+│   ├── MakeMeAdminCLI.psm1       # Module loader
+│   ├── config.json                # Default configuration
+│   ├── Private/                   # Internal functions
+│   │   ├── Service-Main.ps1      # Named pipe server
+│   │   ├── AdminGroup-Functions.ps1
+│   │   ├── ScheduledTask-Functions.ps1
+│   │   ├── Config-Functions.ps1
+│   │   ├── Logging-Functions.ps1
+│   │   └── NamedPipe-Client.ps1
+│   └── Public/                    # Exported cmdlets
+│       ├── Add-TempAdmin.ps1
+│       ├── Remove-TempAdmin.ps1
+│       ├── Get-TempAdminStatus.ps1
+│       └── Set-TempAdminConfig.ps1
+├── tests/                         # Verification tests
+│   └── Test-MakeMeAdminCLI.ps1
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE
+└── README.md                      # This file
 ```
 
 ---
@@ -485,4 +495,4 @@ This project is provided as-is for educational and administrative purposes.
 ## Acknowledgments
 
 - Inspired by [MakeMeAdmin](https://github.com/pseymour/MakeMeAdmin) by Sinclair Community College
-- Original AddTempAdminRights script by Pavel Mirochnitchenko MVP
+

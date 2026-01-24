@@ -284,7 +284,7 @@ else {
     }
 
     Write-Host "To reinstall, run:" -ForegroundColor White
-    Write-Host "  .\Install-MakeMeAdminCLI.ps1 -Force" -ForegroundColor Gray
+    Write-Host "  .\scripts\Install-MakeMeAdminCLI.ps1 -Force" -ForegroundColor Gray
     Write-Host ""
     exit 1
 }

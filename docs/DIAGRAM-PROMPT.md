@@ -1,6 +1,6 @@
 # MakeMeAdminCLI Flow Diagram Prompt
 
-Use this prompt with diagram tools (Mermaid, Draw.io, Lucidchart) or AI image generators (DALL-E, Midjourney, Claude Artifacts).
+Use this prompt with diagram tools (Mermaid, Draw.io, Lucidchart) or AI image generators.
 
 ---
 

@@ -88,6 +88,8 @@ if (-not (Test-IsAdministrator)) {
 
 # Define paths
 $ScriptRoot = Split-Path -Parent $PSCommandPath
+$RepoRoot = Split-Path -Parent $ScriptRoot
+$ModuleSourcePath = Join-Path $RepoRoot "src\MakeMeAdminCLI"
 $ModuleName = "MakeMeAdminCLI"
 $TargetModulePath = Join-Path $env:ProgramFiles "WindowsPowerShell\Modules\$ModuleName"
 $StateDirectory = Join-Path $env:ProgramData $ModuleName
@@ -142,7 +144,7 @@ try {
     )
 
     foreach ($item in $itemsToCopy) {
-        $sourcePath = Join-Path $ScriptRoot $item
+        $sourcePath = Join-Path $ModuleSourcePath $item
         if (Test-Path $sourcePath) {
             Copy-Item -Path $sourcePath -Destination $TargetModulePath -Recurse -Force
         }
@@ -162,7 +164,7 @@ try {
     }
 
     # Copy default config to state directory if it doesn't exist or Force is specified
-    $sourceConfig = Join-Path $ScriptRoot "config.json"
+    $sourceConfig = Join-Path $ModuleSourcePath "config.json"
     if ((Test-Path $sourceConfig) -and (-not (Test-Path $ConfigFilePath) -or $Force)) {
         Copy-Item -Path $sourceConfig -Destination $ConfigFilePath -Force
     }
