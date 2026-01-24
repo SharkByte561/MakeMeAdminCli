@@ -1,0 +1,57 @@
+# Claude Code local settings
+.claude/
+
+# PowerShell Module Development
+*.ps1xml
+
+# Build outputs
+/out/
+/output/
+/build/
+/release/
+
+# Test results
+/TestResults/
+*.Tests.ps1.xml
+coverage.xml
+
+# PSScriptAnalyzer
+PSScriptAnalyzerSettings.psd1
+
+# IDE and editors
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Sensitive files - NEVER commit these
+*.pfx
+*.snk
+secrets.json
+local.config.json
+
+# Runtime state (generated during installation)
+state.json
+
+# NuGet packages (if using for build)
+packages/
+*.nupkg
+
+# Module packaging
+/Publish/

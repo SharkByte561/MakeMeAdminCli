@@ -1,0 +1,11 @@
+{
+    "DefaultDurationMinutes": 15,
+    "MaxDurationMinutes": 60,
+    "MinDurationMinutes": 1,
+    "EventLogSource": "MakeMeAdminCLI",
+    "AllowedUsers": [],
+    "DeniedUsers": [],
+    "PipeName": "MakeMeAdminCLI",
+    "TaskPath": "\\Microsoft\\Windows\\MakeMeAdminCLI",
+    "StateFilePath": null
+}
