@@ -1,5 +1,7 @@
 # MakeMeAdminCLI
 
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/MakeMeAdminCLI)](https://www.powershellgallery.com/packages/MakeMeAdminCLI)
+
 A PowerShell module for granting temporary local administrator rights from the command line. Inspired by [MakeMeAdmin](https://github.com/pseymour/MakeMeAdmin), this CLI-focused implementation allows standard users to elevate themselves without requiring a GUI application.
 
 ## Features
@@ -20,10 +22,10 @@ A PowerShell module for granting temporary local administrator rights from the c
 ### 1. Install (Run as Administrator)
 
 ```powershell
-# Navigate to the repository root
-cd .\MakeMeAdminCli
+# Install from PowerShell Gallery
+Install-Module MakeMeAdminCLI
 
-# Run the installer (requires elevation)
+# Or clone the repo and run the installer
 .\scripts\Install-MakeMeAdminCLI.ps1
 ```
 
@@ -77,12 +79,21 @@ Remove-TempAdmin
 - PowerShell 5.1 or later
 - Administrator privileges (for installation only)
 
-### Install
+### Install from PowerShell Gallery (Recommended)
 
 Run PowerShell as Administrator:
 
 ```powershell
-# From the repository root
+Install-Module MakeMeAdminCLI
+```
+
+### Install from Source
+
+Clone the repo and run the installer as Administrator:
+
+```powershell
+git clone https://github.com/SharkByte561/MakeMeAdminCLI.git
+cd MakeMeAdminCLI
 .\scripts\Install-MakeMeAdminCLI.ps1
 
 # Force reinstall if already installed

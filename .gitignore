@@ -1,6 +1,9 @@
 # Local settings
 .claude/
 
+# Social media / marketing drafts
+docs/linkedin-post.md
+
 # PowerShell Module Development
 *.ps1xml
 
