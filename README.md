@@ -8,6 +8,7 @@ A PowerShell module for granting temporary local administrator rights from the c
 - **Automatic expiration** - Admin rights are automatically removed after a configurable timeout
 - **CLI-first design** - All operations available from PowerShell command line
 - **Language-independent** - Uses Windows SIDs instead of localized group names
+- **Elevated process launching** - Launch programs with elevation through the service, no UAC prompt
 - **Secure architecture** - Service runs as SYSTEM; users communicate via named pipes
 - **Event logging** - All operations logged to Windows Event Log for auditing
 - **Access control** - Allow/deny lists to control which users can request elevation
@@ -43,7 +44,23 @@ Add-TempAdmin -DurationMinutes 30
 Get-TempAdminStatus
 ```
 
-### 4. Remove Admin Rights Early (Optional)
+### 4. Launch Elevated Programs
+
+```powershell
+# Launch an elevated PowerShell — no UAC prompt
+Invoke-AsAdmin powershell
+
+# Launch an elevated Command Prompt
+Invoke-AsAdmin cmd.exe
+
+# Launch Disk Management
+Invoke-AsAdmin mmc.exe diskmgmt.msc
+
+# Launch a specific executable
+Invoke-AsAdmin "C:\Program Files\7-Zip\7zFM.exe"
+```
+
+### 5. Remove Admin Rights Early (Optional)
 
 ```powershell
 # Relinquish admin rights before timeout
@@ -213,6 +230,47 @@ Use 'Add-TempAdmin' to request temporary elevation.
 
 ---
 
+### Invoke-AsAdmin
+
+Launch a program with elevation through the SYSTEM service. Uses ServiceUI.exe (Microsoft MDT tool) to display the process on the user's desktop — no UAC prompt required. You must have an active elevation session via `Add-TempAdmin` first.
+
+```powershell
+# Launch elevated PowerShell
+Invoke-AsAdmin powershell
+
+# Launch elevated Command Prompt
+Invoke-AsAdmin cmd.exe
+
+# Launch a program with arguments
+Invoke-AsAdmin notepad "C:\Windows\System32\drivers\etc\hosts"
+
+# Launch an MMC snap-in
+Invoke-AsAdmin mmc.exe diskmgmt.msc
+Invoke-AsAdmin mmc.exe services.msc
+Invoke-AsAdmin mmc.exe devmgmt.msc
+
+# Launch a specific executable by full path
+Invoke-AsAdmin "X:\Vault\Tools\VeraCrypt\VeraCrypt-x64.exe"
+
+# Set working directory
+Invoke-AsAdmin cmd.exe -WorkingDirectory "C:\Projects"
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `-Program` | String | Executable name or full path (resolved from PATH if not rooted) |
+| `-ArgumentList` | String[] | Arguments to pass to the program |
+| `-WorkingDirectory` | String | Working directory for the launched process |
+
+**Aliases:** `runas`
+
+**Output:** Returns a `PSCustomObject` with `Success` (bool) and `Message` (string).
+
+**How it works:** The client resolves the program path, sends an `exec` request over the named pipe to the SYSTEM service, which validates the user has an active `mama` session, then launches the program via `ServiceUI.exe -process:explorer.exe` to bridge it to the user's interactive desktop.
+
+---
+
 ### Set-TempAdminConfig
 
 View or modify configuration settings (requires elevation to modify).
@@ -308,38 +366,38 @@ Set-TempAdminConfig -AllowedUsers @("S-1-5-21-XXXX-XXXX-XXXX-1001")
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Standard User Session                        │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────┐ │
-│  │ Add-TempAdmin│   │Remove-TempAdm│   │ Get-TempAdminStatus  │ │
-│  └──────┬───────┘   └──────┬───────┘   └──────────┬───────────┘ │
-│         │                  │                      │              │
-│         └──────────────────┼──────────────────────┘              │
-│                            │                                     │
-│                    Named Pipe Client                             │
-│                   (NamedPipe-Client.ps1)                         │
-└────────────────────────────┼─────────────────────────────────────┘
-                             │
-                      Named Pipe IPC
-                    "\\.\pipe\MakeMeAdminCLI"
-                             │
-┌────────────────────────────┼─────────────────────────────────────┐
-│                     SYSTEM Context                               │
-│                            │                                     │
-│                    ┌───────┴───────┐                             │
-│                    │ Service-Main  │ (Scheduled Task as SYSTEM)  │
-│                    └───────┬───────┘                             │
-│                            │                                     │
-│         ┌──────────────────┼──────────────────┐                  │
-│         │                  │                  │                  │
-│  ┌──────┴──────┐   ┌───────┴──────┐   ┌──────┴───────┐          │
-│  │ AdminGroup  │   │ScheduledTask │   │   Logging    │          │
-│  │ Functions   │   │  Functions   │   │  Functions   │          │
-│  └─────────────┘   └──────────────┘   └──────────────┘          │
-│         │                  │                                     │
-│  Local Admins      Task Scheduler        Event Log              │
-│    Group        (Removal Tasks)        (Application)            │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                      Standard User Session                           │
+│  ┌──────────────┐ ┌──────────────┐ ┌────────────┐ ┌──────────────┐  │
+│  │ Add-TempAdmin│ │Remove-TempAdm│ │TempAdmStat │ │Invoke-AsAdmin│  │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬─────┘ └──────┬───────┘  │
+│         │                │                │              │           │
+│         └────────────────┼────────────────┼──────────────┘           │
+│                          │                │                          │
+│                  Named Pipe Client (NamedPipe-Client.ps1)            │
+└──────────────────────────┼────────────────┼──────────────────────────┘
+                           │                │
+                    Named Pipe IPC: "\\.\pipe\MakeMeAdminCLI"
+                           │                │
+┌──────────────────────────┼────────────────┼──────────────────────────┐
+│                    SYSTEM Context          │                          │
+│                          │                │                          │
+│                  ┌───────┴────────────────┴┐                         │
+│                  │     Service-Main        │ (Scheduled Task)        │
+│                  │  add / remove / status  │                         │
+│                  │          exec ──────────┼──┐                      │
+│                  └───────┬────────────────┬┘  │                      │
+│                          │                │   │                      │
+│       ┌──────────────────┼────────┐       │   ▼                      │
+│       │                  │        │       │  ServiceUI.exe           │
+│ ┌─────┴─────┐  ┌─────────┴─────┐ │ ┌─────┴──────┐  │               │
+│ │ AdminGroup│  │ScheduledTask  │ │ │  Logging   │  ▼               │
+│ │ Functions │  │  Functions    │ │ │  Functions │  User's Desktop   │
+│ └───────────┘  └───────────────┘ │ └────────────┘  (elevated app)  │
+│       │                │         │                                   │
+│ Local Admins     Task Scheduler  │    Event Log                     │
+│   Group       (Removal Tasks)    │  (Application)                   │
+└──────────────────────────────────┴───────────────────────────────────┘
 ```
 
 ### Components
@@ -365,6 +423,7 @@ Events are logged to **Windows Logs > Application** with source **MakeMeAdminCLI
 | 1006 | Information | Admin rights removed |
 | 1010 | Warning | Non-critical issues |
 | 1020 | Error | Critical errors |
+| 1060 | Information | Process launched via exec |
 
 ---
 
@@ -440,7 +499,13 @@ Import-Module MakeMeAdminCLI
 
 New processes don't have admin rights after `Add-TempAdmin` succeeds.
 
-**Solution:** This is expected Windows behavior. Start a new process (e.g., new PowerShell window) or sign out and back in.
+**Solution:** Windows does not update existing logon tokens mid-session. Use `Invoke-AsAdmin` to launch elevated programs through the service (no UAC prompt), or sign out and back in for full effect.
+
+```powershell
+# After mama, launch elevated programs with:
+Invoke-AsAdmin powershell
+Invoke-AsAdmin cmd.exe
+```
 
 ### Check Service Logs
 
@@ -466,8 +531,9 @@ MakeMeAdminCLI/
 │   ├── MakeMeAdminCLI.psd1       # Module manifest
 │   ├── MakeMeAdminCLI.psm1       # Module loader
 │   ├── config.json                # Default configuration
+│   ├── ServiceUI.exe              # Microsoft MDT tool for desktop bridging
 │   ├── Private/                   # Internal functions
-│   │   ├── Service-Main.ps1      # Named pipe server
+│   │   ├── Service-Main.ps1      # Named pipe server (add/remove/status/exec)
 │   │   ├── AdminGroup-Functions.ps1
 │   │   ├── ScheduledTask-Functions.ps1
 │   │   ├── Config-Functions.ps1
@@ -477,7 +543,8 @@ MakeMeAdminCLI/
 │       ├── Add-TempAdmin.ps1
 │       ├── Remove-TempAdmin.ps1
 │       ├── Get-TempAdminStatus.ps1
-│       └── Set-TempAdminConfig.ps1
+│       ├── Set-TempAdminConfig.ps1
+│       └── Invoke-AsAdmin.ps1
 ├── tests/                         # Verification tests
 │   └── Test-MakeMeAdminCLI.ps1
 ├── CHANGELOG.md
