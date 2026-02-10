@@ -52,7 +52,8 @@
         'Add-TempAdmin',
         'Remove-TempAdmin',
         'Get-TempAdminStatus',
-        'Set-TempAdminConfig'
+        'Set-TempAdminConfig',
+        'Invoke-AsAdmin'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -65,7 +66,8 @@
     AliasesToExport = @(
         'mama',
         'rmadmin',
-        'adminstatus'
+        'adminstatus',
+        'runas'
     )
 
     # DSC resources to export from this module
@@ -79,6 +81,7 @@
         'MakeMeAdminCLI.psd1',
         'MakeMeAdminCLI.psm1',
         'config.json',
+        'ServiceUI.exe',
         'Private\Config-Functions.ps1',
         'Private\NamedPipe-Client.ps1',
         'Private\Logging-Functions.ps1',
@@ -88,7 +91,8 @@
         'Public\Add-TempAdmin.ps1',
         'Public\Remove-TempAdmin.ps1',
         'Public\Get-TempAdminStatus.ps1',
-        'Public\Set-TempAdminConfig.ps1'
+        'Public\Set-TempAdminConfig.ps1',
+        'Public\Invoke-AsAdmin.ps1'
     )
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.

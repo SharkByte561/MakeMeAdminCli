@@ -21,6 +21,7 @@
     - 1030: Configuration change
     - 1040: Request received
     - 1050: Request denied
+    - 1060: Process launched
 #>
 
 # Event ID constants
@@ -34,6 +35,7 @@ $script:EventIds = @{
     ConfigChange = 1030
     RequestReceived = 1040
     RequestDenied = 1050
+    ProcessLaunched = 1060
 }
 
 # Default event source
@@ -379,6 +381,33 @@ function Write-RequestDeniedEvent {
                          -EntryType Warning
 }
 
+function Write-ProcessLaunchedEvent {
+    <#
+    .SYNOPSIS
+        Logs that a process was launched via the exec action.
+
+    .PARAMETER Username
+        The username that requested the process launch.
+
+    .PARAMETER ProgramPath
+        The full path of the program that was launched.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Username,
+
+        [Parameter(Mandatory)]
+        [string]$ProgramPath
+    )
+
+    $message = "Process launched for '$Username'. Program: $ProgramPath"
+
+    Write-MakeMeAdminLog -Message $message `
+                         -EventId $script:EventIds.ProcessLaunched `
+                         -EntryType Information
+}
+
 function Write-WarningEvent {
     <#
     .SYNOPSIS
@@ -439,6 +468,7 @@ if ($MyInvocation.MyCommand.ScriptBlock.Module) {
         'Write-AdminRightsRemovedEvent',
         'Write-RequestReceivedEvent',
         'Write-RequestDeniedEvent',
+        'Write-ProcessLaunchedEvent',
         'Write-WarningEvent',
         'Write-ErrorEvent'
     )

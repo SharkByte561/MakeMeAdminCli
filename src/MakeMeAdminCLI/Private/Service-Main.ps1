@@ -22,7 +22,8 @@
 
     Named Pipe Protocol:
     - Pipe Name: MakeMeAdminCLI (configurable)
-    - Request Format: JSON { "action": "add|remove|status", "username": "DOMAIN\\user", "duration": 15 }
+    - Request Format: JSON { "action": "add|remove|status|exec", "username": "DOMAIN\\user", "duration": 15 }
+    - Exec Format: JSON { "action": "exec", "program": "C:\\path\\to\\app.exe", "arguments": "...", "workingDirectory": "..." }
     - Response Format: JSON { "success": true|false, "message": "...", "expiresAt": "ISO8601 datetime" }
 
 .PARAMETER RunOnce
@@ -570,6 +571,82 @@ function Invoke-StatusRequest {
     }
 }
 
+function Invoke-ExecRequest {
+    <#
+    .SYNOPSIS
+        Handles a request to launch a process on the user's desktop via ServiceUI.exe.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Request,
+
+        [Parameter(Mandatory)]
+        [string]$ClientIdentity
+    )
+
+    Write-Verbose "Processing EXEC request from '$ClientIdentity'"
+
+    $normalizedClient = $ClientIdentity -replace '^[^\\]+\\', ''
+
+    # Check user has active elevation
+    $activeUsers = Get-ActiveUsers
+    $userEntry = $activeUsers | Where-Object {
+        ($_.Username -replace '^[^\\]+\\', '') -eq $normalizedClient
+    }
+
+    if (-not $userEntry) {
+        Write-RequestDeniedEvent -Username $ClientIdentity -Reason "No active elevation session for exec request"
+        return New-Response -Success $false -Message "Access denied: You do not have an active elevation session. Run 'Add-TempAdmin' first."
+    }
+
+    # Validate program path
+    $programPath = $Request.program
+    if (-not $programPath -or -not (Test-Path $programPath)) {
+        return New-Response -Success $false -Message "Program not found: '$programPath'. Provide a valid program path."
+    }
+
+    # Locate ServiceUI.exe relative to module root
+    $serviceUIPath = Join-Path $ModuleRoot "ServiceUI.exe"
+    if (-not (Test-Path $serviceUIPath)) {
+        Write-ErrorEvent -Message "ServiceUI.exe not found at '$serviceUIPath'"
+        return New-Response -Success $false -Message "ServiceUI.exe not found. Reinstall MakeMeAdminCLI."
+    }
+
+    # Build ServiceUI arguments
+    # ServiceUI.exe -process:explorer.exe "program" arguments
+    $serviceUIArgs = "-process:explorer.exe `"$programPath`""
+
+    if ($Request.arguments) {
+        $serviceUIArgs += " $($Request.arguments)"
+    }
+
+    try {
+        Write-Verbose "Launching: $serviceUIPath $serviceUIArgs"
+
+        $startParams = @{
+            FilePath     = $serviceUIPath
+            ArgumentList = $serviceUIArgs
+            NoNewWindow  = $true
+        }
+
+        if ($Request.workingDirectory -and (Test-Path $Request.workingDirectory -PathType Container)) {
+            $startParams['WorkingDirectory'] = $Request.workingDirectory
+        }
+
+        Start-Process @startParams
+
+        # Log the event
+        Write-ProcessLaunchedEvent -Username $ClientIdentity -ProgramPath $programPath
+
+        return New-Response -Success $true -Message "Process launched: $programPath"
+    }
+    catch {
+        Write-ErrorEvent -Message "Failed to launch process for '$ClientIdentity': $($_.Exception.Message)" -Exception $_.Exception
+        return New-Response -Success $false -Message "Failed to launch process: $($_.Exception.Message)"
+    }
+}
+
 function Invoke-Request {
     <#
     .SYNOPSIS
@@ -600,8 +677,11 @@ function Invoke-Request {
         'status' {
             return Invoke-StatusRequest -Username $username -ClientIdentity $ClientIdentity
         }
+        'exec' {
+            return Invoke-ExecRequest -Request $Request -ClientIdentity $ClientIdentity
+        }
         default {
-            return New-Response -Success $false -Message "Unknown action: $action. Valid actions are: add, remove, status."
+            return New-Response -Success $false -Message "Unknown action: $action. Valid actions are: add, remove, status, exec."
         }
     }
 }

@@ -139,6 +139,7 @@ try {
         "MakeMeAdminCLI.psd1",
         "MakeMeAdminCLI.psm1",
         "config.json",
+        "ServiceUI.exe",
         "Private",
         "Public"
     )
