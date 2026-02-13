@@ -3,7 +3,7 @@
     RootModule = 'MakeMeAdminCLI.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.1.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -53,7 +53,10 @@
         'Remove-TempAdmin',
         'Get-TempAdminStatus',
         'Set-TempAdminConfig',
-        'Invoke-AsAdmin'
+        'Invoke-AsAdmin',
+        'Install-MakeMeAdminService',
+        'Uninstall-MakeMeAdminService',
+        'Test-MakeMeAdminService'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -67,7 +70,10 @@
         'mama',
         'rmadmin',
         'adminstatus',
-        'runas'
+        'runas',
+        'install-mama',
+        'uninstall-mama',
+        'test-mama'
     )
 
     # DSC resources to export from this module
@@ -92,7 +98,10 @@
         'Public\Remove-TempAdmin.ps1',
         'Public\Get-TempAdminStatus.ps1',
         'Public\Set-TempAdminConfig.ps1',
-        'Public\Invoke-AsAdmin.ps1'
+        'Public\Invoke-AsAdmin.ps1',
+        'Public\Install-MakeMeAdminService.ps1',
+        'Public\Uninstall-MakeMeAdminService.ps1',
+        'Public\Test-MakeMeAdminService.ps1'
     )
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
@@ -114,6 +123,12 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+Version 1.1.0:
+- Invoke-AsAdmin: Launch elevated programs through SYSTEM service via ServiceUI.exe — no UAC prompt
+- Reworked exec flow routes through named pipe to service instead of Start-Process -Verb RunAs
+- New Event ID 1060 for process launch auditing
+- ServiceUI.exe (Microsoft MDT) bundled for desktop session bridging
+
 Version 1.0.0:
 - Initial release
 - Add-TempAdmin: Request temporary admin rights

@@ -68,7 +68,11 @@ $publicFiles = @(
     'Add-TempAdmin.ps1',
     'Remove-TempAdmin.ps1',
     'Get-TempAdminStatus.ps1',
-    'Set-TempAdminConfig.ps1'
+    'Set-TempAdminConfig.ps1',
+    'Invoke-AsAdmin.ps1',
+    'Install-MakeMeAdminService.ps1',
+    'Uninstall-MakeMeAdminService.ps1',
+    'Test-MakeMeAdminService.ps1'
 )
 
 $functionsToExport = @()
@@ -98,9 +102,13 @@ foreach ($file in $publicFiles) {
 
 # Define convenient aliases for common operations
 $aliasesToExport = @{
-    'mama' = 'Add-TempAdmin'          # "Make Me Admin" short form
-    'rmadmin' = 'Remove-TempAdmin'    # Remove admin short form
-    'adminstatus' = 'Get-TempAdminStatus'  # Status check
+    'mama'           = 'Add-TempAdmin'              # "Make Me Admin" short form
+    'rmadmin'        = 'Remove-TempAdmin'            # Remove admin short form
+    'adminstatus'    = 'Get-TempAdminStatus'         # Status check
+    'runas'          = 'Invoke-AsAdmin'              # Run as admin short form
+    'install-mama'   = 'Install-MakeMeAdminService'  # Install service short form
+    'uninstall-mama' = 'Uninstall-MakeMeAdminService' # Uninstall service short form
+    'test-mama'      = 'Test-MakeMeAdminService'     # Test service short form
 }
 
 foreach ($alias in $aliasesToExport.GetEnumerator()) {
@@ -124,14 +132,22 @@ Export-ModuleMember -Function @(
     'Add-TempAdmin',
     'Remove-TempAdmin',
     'Get-TempAdminStatus',
-    'Set-TempAdminConfig'
+    'Set-TempAdminConfig',
+    'Invoke-AsAdmin',
+    'Install-MakeMeAdminService',
+    'Uninstall-MakeMeAdminService',
+    'Test-MakeMeAdminService'
 )
 
 # Export aliases
 Export-ModuleMember -Alias @(
     'mama',
     'rmadmin',
-    'adminstatus'
+    'adminstatus',
+    'runas',
+    'install-mama',
+    'uninstall-mama',
+    'test-mama'
 )
 
 #endregion
@@ -142,5 +158,39 @@ Export-ModuleMember -Alias @(
 Write-Verbose "MakeMeAdminCLI module loaded successfully."
 Write-Verbose "Exported functions: $($functionsToExport -join ', ')"
 Write-Verbose "Exported aliases: $($aliasesToExport.Keys -join ', ')"
+
+#endregion
+
+#region Import-time Service Check
+
+# Check whether the background service is configured.
+# This is a lightweight, non-blocking check that warns users if the service
+# is not installed or not running. Wrapped in try/catch so it never prevents
+# the module from loading.
+
+try {
+    $serviceTaskName = 'MakeMeAdminCLI-Service'
+    $serviceTaskPath = '\Microsoft\Windows\MakeMeAdminCLI\'
+
+    $serviceTask = Get-ScheduledTask -TaskName $serviceTaskName -TaskPath $serviceTaskPath -ErrorAction SilentlyContinue
+
+    if (-not $serviceTask) {
+        Write-Warning @"
+The MakeMeAdminCLI service is not installed.
+Run 'Install-MakeMeAdminService' from an elevated PowerShell session to configure it.
+This is a one-time setup step.
+"@
+    }
+    elseif ($serviceTask.State -ne 'Running') {
+        Write-Warning @"
+The MakeMeAdminCLI service task exists but is not running (State: $($serviceTask.State)).
+Start it manually or check Task Scheduler: $serviceTaskPath$serviceTaskName
+"@
+    }
+}
+catch {
+    # Never let the service check prevent module loading
+    Write-Verbose "Service check skipped: $($_.Exception.Message)"
+}
 
 #endregion
