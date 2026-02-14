@@ -3,7 +3,7 @@
     RootModule = 'MakeMeAdminCLI.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.1.0'
+    ModuleVersion = '1.2.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -123,6 +123,12 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+Version 1.2.0:
+- Install-MakeMeAdminService: One-command service setup (scheduled task, config, event log)
+- Uninstall-MakeMeAdminService: Clean removal of service and all artifacts
+- Test-MakeMeAdminService: Validate service health and configuration
+- Import-time service check warns if service is not running
+
 Version 1.1.0:
 - Invoke-AsAdmin: Launch elevated programs through SYSTEM service via ServiceUI.exe — no UAC prompt
 - Reworked exec flow routes through named pipe to service instead of Start-Process -Verb RunAs

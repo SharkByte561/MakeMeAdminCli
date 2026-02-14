@@ -29,7 +29,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ModulePath = $PSScriptRoot
+$ModulePath = Join-Path (Split-Path $PSScriptRoot) 'src\MakeMeAdminCLI'
 $ModuleName = 'MakeMeAdminCLI'
 
 Write-Host "=== MakeMeAdminCLI PowerShell Gallery Publisher ===" -ForegroundColor Cyan
