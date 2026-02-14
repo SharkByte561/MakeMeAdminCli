@@ -2,7 +2,8 @@
 .claude/
 
 # Social media / marketing drafts
-docs/linkedin-post.md
+docs/linkedin-post*.md
+docs/link_post*.md
 
 # PowerShell Module Development
 *.ps1xml
